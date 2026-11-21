@@ -18,6 +18,22 @@
     "dist/cli.d.ts",
     "dist/index.js",
     "dist/index.d.ts",
+    "dist/intelligence/analyze-project.js",
+    "dist/intelligence/analyze-project.d.ts",
+    "dist/intelligence/configuration.js",
+    "dist/intelligence/configuration.d.ts",
+    "dist/intelligence/dependencies.js",
+    "dist/intelligence/dependencies.d.ts",
+    "dist/intelligence/frameworks.js",
+    "dist/intelligence/frameworks.d.ts",
+    "dist/intelligence/markers.js",
+    "dist/intelligence/markers.d.ts",
+    "dist/intelligence/package-manager.js",
+    "dist/intelligence/package-manager.d.ts",
+    "dist/intelligence/project-files.js",
+    "dist/intelligence/project-files.d.ts",
+    "dist/intelligence/types.js",
+    "dist/intelligence/types.d.ts",
     "dist/scanner.js",
     "dist/scanner.d.ts"
   ],
@@ -25,7 +41,7 @@
     "build": "tsc -p tsconfig.json",
     "dev": "node --import tsx/esm src/cli.ts",
     "test": "vitest run tests",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json"
   },
   "repository": {
     "type": "git",

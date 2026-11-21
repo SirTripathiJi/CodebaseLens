@@ -1,7 +1,7 @@
 import { lstat, readdir, realpath } from "node:fs/promises";
 import path from "node:path";
 
-const IGNORED_DIRECTORIES = new Set([
+export const IGNORED_DIRECTORY_NAMES = [
   "node_modules",
   ".git",
   "dist",
@@ -11,7 +11,9 @@ const IGNORED_DIRECTORIES = new Set([
   ".nuxt",
   ".cache",
   "vendor",
-]);
+] as const;
+
+const IGNORED_DIRECTORIES = new Set<string>(IGNORED_DIRECTORY_NAMES);
 
 const LANGUAGE_BY_EXTENSION: Record<string, string> = {
   ".c": "C",

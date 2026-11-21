@@ -1,6 +1,6 @@
 # CodebaseLens
 
-CodebaseLens is a small command-line tool that scans a project directory and summarizes its files, folders, and programming languages. It skips common dependency and generated-output directories and does not follow symbolic links.
+CodebaseLens is a lightweight command-line tool that summarizes a software project: files, languages, frameworks, dependencies, package manager, configuration files, and code markers. It skips common dependency and generated-output directories and does not follow symbolic links.
 
 ## Requirements
 
@@ -36,11 +36,16 @@ The available project commands are:
 
 The installed CLI also supports `codebaselens --help` and `codebaselens --version`.
 
+## Project analysis
+
+The analyzer identifies frameworks from dependency manifests, reports dependency names and production/development counts from `package.json`, and uses lockfiles to identify npm, pnpm, Yarn, or Bun. It lists common configuration files without opening environment files. Code marker matches include file paths and line numbers; source files are scanned without printing their contents.
+
 ## Example
 
 ```text
 $ codebaselens analyze .
-CodebaseLens analysis: /work/my-app
+Project: my-app
+Path: /work/my-app
 Files: 12
 Directories: 3
 
@@ -50,9 +55,27 @@ Files by language:
   TypeScript: 8
   TypeScript (TSX): 2
 
+Frameworks:
+  Next.js, React
+
+Dependencies:
+  Production (2): next, react
+  Development (2): eslint, typescript
+
+Package manager: npm
+
+Configuration files:
+  .env.example
+  .gitignore
+  package.json
+  tsconfig.json
+
+Code markers: 1 (TODO 1, FIXME 0, HACK 0)
+  src/app.tsx:18 (TODO)
+
 Top-level folders:
   src
   tests
 ```
 
-Counts exclude `node_modules`, `.git`, `dist`, `build`, `coverage`, `.next`, `.nuxt`, `.cache`, and `vendor`. Unknown file extensions are grouped as `Other`.
+Counts exclude `node_modules`, `.git`, `dist`, `build`, `coverage`, `.next`, `.nuxt`, `.cache`, and `vendor`. Unknown file extensions are grouped as `Other`. Multiple or missing lockfile types are reported as an unknown package manager. Actual `.env` files are never opened or listed.
