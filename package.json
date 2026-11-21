@@ -1,0 +1,61 @@
+{
+  "name": "codebaselens",
+  "version": "0.1.0",
+  "description": "A developer toolkit for analyzing software project structure, architecture, dependencies and project health.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "codebaselens": "./dist/cli.js"
+  },
+  "files": [
+    "dist/cli.js",
+    "dist/cli.d.ts",
+    "dist/index.js",
+    "dist/index.d.ts",
+    "dist/scanner.js",
+    "dist/scanner.d.ts"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "node --import tsx/esm src/cli.ts",
+    "test": "vitest run tests",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SirTripathiJi/CodebaseLens.git"
+  },
+  "keywords": [
+    "codebase",
+    "project-analyzer",
+    "repository-analysis",
+    "developer-tools",
+    "typescript"
+  ],
+  "author": "tripathi_ji",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "bugs": {
+    "url": "https://github.com/SirTripathiJi/CodebaseLens/issues"
+  },
+  "homepage": "https://github.com/SirTripathiJi/CodebaseLens#readme",
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^7.3.8",
+    "vitest": "^4.1.12"
+  },
+  "dependencies": {
+    "commander": "^15.1.0"
+  }
+}
