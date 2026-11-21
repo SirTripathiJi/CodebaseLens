@@ -3,6 +3,8 @@ import { Command } from "commander";
 import { realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { analyzeProject } from "./intelligence/analyze-project.js";
+import { renderTerminalReport } from "./reports/terminal.js";
+import { writeProjectReport, type ExportFormat } from "./reports/report.js";
 import packageMetadata from "../package.json" with { type: "json" };
 
 export const program = new Command();
@@ -16,67 +18,24 @@ program
   .command("analyze")
   .description("Analyze a project directory")
   .argument("[directory]", "directory to scan", ".")
-  .action(async (directory: string) => {
+  .option("--format <format>", "output format: terminal, markdown, or json", "terminal")
+  .option("--output <path>", "write a Markdown or JSON report to this path")
+  .action(async (directory: string, options: { format: string; output?: string }) => {
     try {
+      if (!["terminal", "markdown", "json"].includes(options.format)) {
+        throw new Error(`Unsupported output format "${options.format}". Choose terminal, markdown, or json.`);
+      }
+      if (options.output && options.format === "terminal") {
+        throw new Error("The --output option requires --format markdown or --format json.");
+      }
+
       const result = await analyzeProject(directory);
-      console.log(`Project: ${result.projectName}`);
-      console.log(`Path: ${result.rootPath}`);
-      console.log(`Files: ${result.totalFiles}`);
-      console.log(`Directories: ${result.totalDirectories}`);
-      console.log("\nFiles by language:");
-
-      const languages = Object.entries(result.filesByLanguage).sort(
-        ([left], [right]) => left.localeCompare(right),
-      );
-      if (languages.length === 0) {
-        console.log("  (no files found)");
+      if (options.format === "terminal") {
+        console.log(renderTerminalReport(result));
       } else {
-        for (const [language, count] of languages) {
-          console.log(`  ${language}: ${count}`);
-        }
+        const report = await writeProjectReport(result, options.format as ExportFormat, options.output);
+        console.log(`Report written to ${report.outputPath}`);
       }
-
-      console.log("\nFrameworks:");
-      console.log(
-        result.frameworks.length > 0 ? `  ${result.frameworks.join(", ")}` : "  (none detected)",
-      );
-
-      console.log("\nDependencies:");
-      if (result.dependencies.packageJsonStatus === "valid") {
-        console.log(
-          `  Production (${result.dependencies.productionCount}): ${result.dependencies.productionNames.join(", ") || "(none)"}`,
-        );
-        console.log(
-          `  Development (${result.dependencies.developmentCount}): ${result.dependencies.developmentNames.join(", ") || "(none)"}`,
-        );
-      } else {
-        console.log(`  Unavailable: package.json ${result.dependencies.packageJsonStatus}`);
-      }
-
-      console.log(`\nPackage manager: ${result.packageManager}`);
-      console.log("\nConfiguration files:");
-      console.log(
-        result.configurationFiles.length > 0
-          ? result.configurationFiles.map((file) => `  ${file}`).join("\n")
-          : "  (none detected)",
-      );
-
-      const markerSummary = Object.entries(result.markers.counts)
-        .map(([marker, count]) => `${marker} ${count}`)
-        .join(", ");
-      console.log(`\nCode markers: ${result.markers.total} (${markerSummary})`);
-      if (result.markers.locations.length > 0) {
-        for (const location of result.markers.locations) {
-          console.log(`  ${location.filePath}:${location.line} (${location.marker})`);
-        }
-      }
-
-      console.log("\nTop-level folders:");
-      console.log(
-        result.topLevelFolders.length > 0
-          ? result.topLevelFolders.map((folder) => `  ${folder}`).join("\n")
-          : "  (none)",
-      );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.error(`Error: ${message}`);

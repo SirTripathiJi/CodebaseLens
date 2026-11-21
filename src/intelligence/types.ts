@@ -24,6 +24,43 @@ export interface MarkerAnalysis {
   locations: MarkerLocation[];
 }
 
+export type InsightSeverity = "info" | "warning" | "critical";
+
+export interface ProjectInsight {
+  id: string;
+  title: string;
+  explanation: string;
+  severity: InsightSeverity;
+  recommendation: string;
+}
+
+export interface ProjectSignals {
+  readmePresent: boolean;
+  gitIgnorePresent: boolean;
+  sourceFilesDetected: boolean;
+  testsDetected: boolean;
+  dependencySetupRelevant: boolean;
+}
+
+export interface HealthDeduction {
+  points: number;
+  reason: string;
+}
+
+export interface HealthCategory {
+  id: string;
+  name: string;
+  score: number | null;
+  maxScore: number;
+  deductions: HealthDeduction[];
+}
+
+export interface ProjectHealth {
+  score: number;
+  categories: HealthCategory[];
+  methodologyVersion: string;
+}
+
 export interface ProjectAnalysis extends ScanResult {
   projectName: string;
   frameworks: string[];
@@ -31,4 +68,7 @@ export interface ProjectAnalysis extends ScanResult {
   packageManager: string;
   configurationFiles: string[];
   markers: MarkerAnalysis;
+  signals: ProjectSignals;
+  health: ProjectHealth;
+  insights: ProjectInsight[];
 }

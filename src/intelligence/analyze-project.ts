@@ -5,20 +5,24 @@ import { readPackageManifest } from "./dependencies.js";
 import { detectFrameworks } from "./frameworks.js";
 import { analyzeMarkers } from "./markers.js";
 import { detectPackageManager } from "./package-manager.js";
-import { listRootFiles } from "./project-files.js";
+import { listProjectFiles, listRootFiles } from "./project-files.js";
+import { calculateProjectHealth } from "../health/score.js";
+import { generateProjectInsights } from "../health/insights.js";
+import { detectProjectSignals } from "../health/project-signals.js";
 import type { ProjectAnalysis } from "./types.js";
 
 export async function analyzeProject(directoryPath: string): Promise<ProjectAnalysis> {
   const scan = await scanDirectory(directoryPath);
   const rootFiles = await listRootFiles(scan.rootPath);
+  const projectFiles = await listProjectFiles(scan.rootPath);
   const { analysis: dependencies, manifest } = await readPackageManifest(scan.rootPath, rootFiles);
   const projectName = manifest?.name ?? path.basename(scan.rootPath);
   const [frameworks, markers] = await Promise.all([
     detectFrameworks(scan.rootPath, rootFiles, manifest),
-    analyzeMarkers(scan.rootPath),
+    analyzeMarkers(scan.rootPath, projectFiles),
   ]);
 
-  return {
+  const baseAnalysis = {
     ...scan,
     projectName,
     frameworks,
@@ -26,5 +30,15 @@ export async function analyzeProject(directoryPath: string): Promise<ProjectAnal
     packageManager: detectPackageManager(rootFiles),
     configurationFiles: detectConfigurationFiles(rootFiles),
     markers,
+  };
+  const signals = detectProjectSignals(baseAnalysis, rootFiles, projectFiles);
+  const health = calculateProjectHealth(baseAnalysis, signals);
+  const insights = generateProjectInsights(baseAnalysis, signals);
+
+  return {
+    ...baseAnalysis,
+    signals,
+    health,
+    insights,
   };
 }

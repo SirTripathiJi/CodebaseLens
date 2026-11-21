@@ -1,8 +1,6 @@
 import { createReadStream } from "node:fs";
-import { readdir } from "node:fs/promises";
 import { createInterface } from "node:readline";
 import path from "node:path";
-import { IGNORED_DIRECTORY_NAMES } from "../scanner.js";
 import type { MarkerAnalysis, MarkerKind, MarkerLocation } from "./types.js";
 
 const MARKER_NAMES = ["TO" + "DO", "FIX" + "ME", "HA" + "CK"] as const;
@@ -11,31 +9,6 @@ const SOURCE_EXTENSIONS = new Set([
   ".js", ".jsx", ".kt", ".php", ".py", ".rb", ".rs", ".scala", ".sh", ".swift",
   ".ts", ".tsx", ".vue",
 ]);
-const IGNORED_DIRECTORIES = new Set<string>(IGNORED_DIRECTORY_NAMES);
-
-async function collectSourceFiles(directoryPath: string): Promise<string[]> {
-  let entries;
-  try {
-    entries = await readdir(directoryPath, { withFileTypes: true });
-  } catch {
-    return [];
-  }
-
-  const files: string[] = [];
-  for (const entry of entries) {
-    if (entry.isSymbolicLink()) continue;
-    const entryPath = path.join(directoryPath, entry.name);
-    if (entry.isDirectory()) {
-      if (!IGNORED_DIRECTORIES.has(entry.name)) {
-        files.push(...await collectSourceFiles(entryPath));
-      }
-    } else if (entry.isFile() && SOURCE_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) {
-      files.push(entryPath);
-    }
-  }
-  return files;
-}
-
 async function markersInFile(filePath: string, rootPath: string): Promise<MarkerLocation[]> {
   const input = createReadStream(filePath, { encoding: "utf8" });
   const lines = createInterface({ input, crlfDelay: Infinity });
@@ -70,9 +43,11 @@ async function markersInFile(filePath: string, rootPath: string): Promise<Marker
   return containsBinaryData ? [] : locations;
 }
 
-export async function analyzeMarkers(rootPath: string): Promise<MarkerAnalysis> {
+export async function analyzeMarkers(rootPath: string, projectFiles: string[]): Promise<MarkerAnalysis> {
   const locations: MarkerLocation[] = [];
-  const sourceFiles = await collectSourceFiles(rootPath);
+  const sourceFiles = projectFiles
+    .filter((filePath) => SOURCE_EXTENSIONS.has(path.extname(filePath).toLowerCase()))
+    .map((filePath) => path.join(rootPath, ...filePath.split("/")));
 
   for (const sourceFile of sourceFiles) {
     locations.push(...await markersInFile(sourceFile, rootPath));
