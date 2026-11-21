@@ -24,13 +24,13 @@ It runs locally, does not modify the project being analyzed, does not follow sym
 After release, install the CLI globally:
 
 ```sh
-npm install --global codebaselens
+npm install --global @tripathi_ji/codebaselens
 ```
 
 Or run it without a global install using `npx`:
 
 ```sh
-npx codebaselens analyze .
+npx @tripathi_ji/codebaselens analyze .
 ```
 
 ## Usage

@@ -1,5 +1,5 @@
 {
-  "name": "codebaselens",
+  "name": "@tripathi_ji/codebaselens",
   "version": "1.0.0",
   "description": "Analyze project structure, languages, frameworks, dependencies, and health from the command line.",
   "main": "./dist/index.js",
@@ -11,7 +11,7 @@
     }
   },
   "bin": {
-    "codebaselens": "./dist/cli.js"
+    "codebaselens": "dist/cli.js"
   },
   "files": [
     "dist/cli.js",
@@ -59,7 +59,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/SirTripathiJi/CodebaseLens.git"
+    "url": "git+https://github.com/SirTripathiJi/CodebaseLens.git"
   },
   "keywords": [
     "codebase",
