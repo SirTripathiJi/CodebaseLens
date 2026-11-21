@@ -1,6 +1,6 @@
 {
   "name": "@tripathi_ji/codebaselens",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Analyze project structure, languages, frameworks, dependencies, and health from the command line.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

@@ -36,7 +36,7 @@ describe("command line interface", () => {
     expect(help.stdout).toContain("Analyze project structure, languages, frameworks, dependencies, and health.");
     expect(help.stdout).toContain("analyze [options] [directory]");
     expect(version.status).toBe(0);
-    expect(version.stdout.trim()).toBe("1.0.0");
+    expect(version.stdout.trim()).toBe("1.0.1");
   });
 
   it("analyzes a relative path containing spaces", async () => {
