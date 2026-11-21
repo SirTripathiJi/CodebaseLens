@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { Command } from "commander";
+import { Command, Option } from "commander";
 import { realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { analyzeProject } from "./intelligence/analyze-project.js";
@@ -11,20 +11,21 @@ export const program = new Command();
 
 program
   .name("codebaselens")
-  .description("Scan a project directory and summarize its files and languages.")
+  .description("Analyze project structure, languages, frameworks, dependencies, and health.")
+  .showHelpAfterError()
+  .showSuggestionAfterError()
   .version(packageMetadata.version);
 
 program
   .command("analyze")
   .description("Analyze a project directory")
   .argument("[directory]", "directory to scan", ".")
-  .option("--format <format>", "output format: terminal, markdown, or json", "terminal")
+  .addOption(
+    new Option("--format <format>", "report format").choices(["terminal", "markdown", "json"]).default("terminal"),
+  )
   .option("--output <path>", "write a Markdown or JSON report to this path")
   .action(async (directory: string, options: { format: string; output?: string }) => {
     try {
-      if (!["terminal", "markdown", "json"].includes(options.format)) {
-        throw new Error(`Unsupported output format "${options.format}". Choose terminal, markdown, or json.`);
-      }
       if (options.output && options.format === "terminal") {
         throw new Error("The --output option requires --format markdown or --format json.");
       }

@@ -1,7 +1,7 @@
 {
   "name": "codebaselens",
-  "version": "0.1.0",
-  "description": "A developer toolkit for analyzing software project structure, architecture, dependencies and project health.",
+  "version": "1.0.0",
+  "description": "Analyze project structure, languages, frameworks, dependencies, and health from the command line.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -47,7 +47,9 @@
     "dist/reports/terminal.js",
     "dist/reports/terminal.d.ts",
     "dist/scanner.js",
-    "dist/scanner.d.ts"
+    "dist/scanner.d.ts",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -61,12 +63,15 @@
   },
   "keywords": [
     "codebase",
+    "codebase-analysis",
     "project-analyzer",
     "repository-analysis",
     "developer-tools",
-    "typescript"
+    "cli",
+    "typescript",
+    "project-health"
   ],
-  "author": "tripathi_ji",
+  "author": "SirTripathiJi",
   "license": "MIT",
   "type": "module",
   "engines": {
