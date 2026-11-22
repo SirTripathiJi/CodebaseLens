@@ -8,8 +8,9 @@ const ignoredDirectories = new Set<string>(IGNORED_DIRECTORY_NAMES);
 const textExtensions = new Set([
   ".c", ".cc", ".cpp", ".cs", ".css", ".go", ".h", ".hpp", ".html", ".java", ".js", ".jsx",
   ".json", ".kt", ".md", ".php", ".py", ".rb", ".rs", ".scala", ".sh", ".sql", ".swift", ".ts",
-  ".tsx", ".vue", ".xml", ".yaml", ".yml",
+  ".tsx", ".vue", ".xml", ".yaml", ".yml", ".txt", ".toml", ".ini", ".cfg", ".conf", ".csv", ".mdx", ".lock",
 ]);
+const textFileNames = new Set(["dockerfile", "makefile", "gnu makefile", "justfile", "license", "readme", "changelog", ".gitignore", ".editorconfig", ".npmrc"]);
 const technologyNames = [
   "TypeScript", "JavaScript", "Python", "Java", "Go", "Rust", "C++", "C#", "Ruby", "PHP", "Swift",
   "React", "Next.js", "Vue", "Nuxt", "Angular", "Svelte", "Express", "NestJS", "Django", "Flask", "FastAPI",
@@ -73,7 +74,7 @@ export async function analyzeCodeStatistics(root: string, files: string[]): Prom
   const result: CodeStatistics = { files: 0, totalLines: 0, blankLines: 0, nonEmptyLines: 0, byExtension: {} };
   for (const file of files) {
     const ext = path.extname(file).toLowerCase() || "(no extension)";
-    if (!textExtensions.has(ext)) continue;
+    if (!textExtensions.has(ext) && !textFileNames.has(path.basename(file).toLowerCase())) continue;
     let text: string;
     try {
       const buffer = await readFile(file);

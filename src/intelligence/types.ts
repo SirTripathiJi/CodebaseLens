@@ -10,6 +10,54 @@ export interface DependencyAnalysis {
   developmentNames: string[];
 }
 
+export interface DependencyOverview {
+  referencedProduction: string[];
+  referencedDevelopment: string[];
+  unusedProductionCandidates: string[];
+  unusedDevelopmentCandidates: string[];
+}
+
+export interface ScriptAnalysis {
+  status: PackageJsonStatus;
+  scripts: { name: string; command: string }[];
+}
+
+export interface ImportAnalysis {
+  analyzedFiles: number;
+  localImportCount: number;
+  resolvedLocalImports: { importer: string; specifier: string; resolvedPath: string }[];
+  unresolvedLocalImports: { importer: string; specifier: string }[];
+  frequentlyImported: { path: string; count: number }[];
+  referencedPackages: string[];
+  aliasImportsDetected: number;
+  dynamicImportsDetected: number;
+  computedDynamicImportsDetected: number;
+  limitations: string[];
+}
+
+export interface ConfigurationCheck {
+  fileName: string;
+  status: "present" | "missing" | "invalid" | "not-relevant";
+  severity: InsightSeverity;
+  reason: string;
+  recommendation: string;
+}
+
+export interface TechnicalDebtFinding {
+  id: string;
+  category: string;
+  severity: InsightSeverity;
+  title: string;
+  evidence: string;
+  recommendation: string;
+}
+
+export interface TechnicalDebtSummary {
+  findings: TechnicalDebtFinding[];
+  counts: Record<InsightSeverity, number>;
+  groups: { category: string; findings: TechnicalDebtFinding[] }[];
+}
+
 export type MarkerKind = `TO${"DO"}` | `FIX${"ME"}` | `HA${"CK"}`;
 
 export interface MarkerLocation {
@@ -74,6 +122,11 @@ export interface ProjectAnalysis extends ScanResult {
   folderTree: FolderTree;
   emptyFilesAndDirectories: EmptyEntries;
   git: GitAnalysis;
+  scripts: ScriptAnalysis;
+  dependencyOverview: DependencyOverview;
+  imports: ImportAnalysis;
+  configurationChecks: ConfigurationCheck[];
+  technicalDebt: TechnicalDebtSummary;
   signals: ProjectSignals;
   health: ProjectHealth;
   insights: ProjectInsight[];

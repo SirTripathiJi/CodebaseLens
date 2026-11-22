@@ -13,6 +13,7 @@ CodebaseLens does not modify the project being analyzed. It does not follow symb
 - [Quick start](#quick-start)
 - [CLI reference](#cli-reference)
 - [Output examples](#output-examples)
+- [HTML report](#html-report)
 - [Health score methodology](#health-score-methodology)
 - [Insights and recommendations](#insights-and-recommendations)
 - [Supported languages and frameworks](#supported-languages-and-frameworks)
@@ -41,13 +42,19 @@ CodebaseLens does not modify the project being analyzed. It does not follow symb
 | Folder structure | Prints a depth and entry limited project tree, skips configured ignored directories and symlinks, and marks truncated output. |
 | Empty entries | Lists zero-byte regular files and genuinely empty directories by relative path. Findings are read-only. |
 | Git information | Reports branch, working tree state and change counts, plus the latest commit when Git is available and the directory is a repository. |
+| Scripts analyzer | Reads and lists root `package.json` script names and commands. CodebaseLens never runs project scripts. |
+| Dependency overview | Separates production and development dependencies, reports static source references, and lists possible unused candidates conservatively. Candidates are not confirmed unused packages. |
+| Import analysis | Checks JS/JSX/TS/TSX relative imports, resolves common extensions and index files, reports likely unresolved paths, and lists frequently imported modules. |
+| Configuration checker | Detects recognized root configuration files and reports missing files only when useful for the detected source or declared tooling, with a reason and recommendation. `.editorconfig` is optional. |
+| Technical debt summary | Groups supported findings for markers, tests, empty entries, imports, configuration, malformed manifests, and possible unused dependencies by severity with recommendations. |
+| HTML report | Writes a standalone responsive report with inline CSS and charts. It uses no CDN, runs no project scripts, and escapes project-controlled text. |
 | Health analysis | Calculates a normalized score out of 100, category scores, and explicit deductions. |
 | Insights | Produces sorted critical, warning, and informational findings with an explanation and recommended action. |
-| Reports | Prints a terminal report or writes a Markdown or JSON report containing the analysis and scoring methodology. |
+| Reports | Prints a terminal report or writes Markdown, JSON, or standalone HTML reports containing the analysis and findings. |
 
 The scanner counts regular files and directories only. Symlinks are skipped, as are entries inside the fixed ignored-directory list above.
 
-All six project-intelligence sections are included in the existing `analyze` command and in terminal, Markdown, and JSON reports. README understanding and test-framework detection are rule-based. Code statistics cover the recognized text/source extensions listed under supported languages; binary and unreadable files are skipped safely. Folder trees are limited to depth 4 and 200 entries by default. Git is queried read-only; projects without an available Git command or repository receive an unavailable status.
+All thirteen V2 features are included in the existing `analyze` command and in terminal, Markdown, JSON, and HTML reports. README understanding and test-framework detection are rule-based. Code statistics cover recognized source extensions, common text formats such as `.txt`, `.toml`, and `.csv`, and named files such as `Dockerfile` and `Makefile`; binary and unreadable files are skipped. Folder trees are limited to depth 4 and 200 entries by default. Git is queried read-only; projects without Git or a repository receive an unavailable status. Import analysis resolves relative paths; configured aliases and computed dynamic imports cannot be resolved reliably. Candidate unused dependencies may be referenced indirectly by runtime loading, generated code, or tooling, so review them before changing a manifest.
 
 ## Installation
 
@@ -84,13 +91,14 @@ The CLI exposes one subcommand, `analyze`, plus Commander’s top-level help and
 | Command | Arguments and options | Default / result |
 | --- | --- | --- |
 | `codebaselens analyze [directory]` | Optional directory path; relative and absolute paths are accepted. | Directory defaults to `.`; terminal report is printed. |
-| `codebaselens analyze [directory] --format <format>` | `terminal`, `markdown`, or `json`. | `terminal`. Unsupported values are rejected by the CLI. |
+| `codebaselens analyze [directory] --format <format>` | `terminal`, `markdown`, `json`, or `html`. | `terminal`. Unsupported values are rejected by the CLI. |
 | `codebaselens analyze [directory] --format markdown --output <path>` | Optional custom output path. | Writes Markdown to an automatically selected `*-report.md` path if omitted. |
 | `codebaselens analyze [directory] --format json --output <path>` | Optional custom output path. | Writes JSON to an automatically selected `*-report.json` path if omitted. |
+| `codebaselens analyze [directory] --format html --output <path>` | Optional custom output path. | Writes a standalone HTML report to an automatically selected `*-report.html` path if omitted. |
 | `codebaselens --help` | No arguments. | Displays top-level help. `codebaselens analyze --help` displays analyze options. |
 | `codebaselens --version` | No arguments. | Prints the package version. |
 
-With Markdown or JSON, the default report is written outside the analyzed tree: typically in the current working directory when outside the project, or next to the project when invoked from inside it. If that would still place it within the scanned project, the system temporary directory is used. The CLI prints `Report written to <path>`. A custom `--output` path is resolved relative to the current working directory; its parent directory must already exist. Paths whose basename starts with `.env` are rejected. `--output` cannot be combined with terminal format.
+With Markdown, JSON, or HTML, the default report is written outside the analyzed tree: typically in the current working directory when outside the project, or next to the project when invoked from inside it. If that would still place it within the scanned project, the system temporary directory is used. The CLI prints `Report written to <path>`. A custom `--output` path is resolved relative to the current working directory; its parent directory must already exist. Paths whose basename starts with `.env` are rejected. A report cannot overwrite an existing file inside the analyzed project. `--output` cannot be combined with terminal format.
 
 Examples:
 
@@ -108,11 +116,17 @@ codebaselens analyze /work/storefront --format terminal
 # Write JSON using the default report filename
 codebaselens analyze /work/storefront --format json
 
+# Write a standalone visual report
+codebaselens analyze /work/storefront --format html
+
 # Write Markdown to a chosen path (the reports directory must exist)
 codebaselens analyze /work/storefront --format markdown --output ./reports/storefront.md
 
 # Write JSON to a chosen path
 codebaselens analyze . --format json --output ./analysis.json
+
+# Write HTML to a chosen path
+codebaselens analyze . --format html --output ./reports/analysis.html
 
 # Inspect CLI usage and version
 codebaselens --help
@@ -180,7 +194,7 @@ JSON output is a complete payload with `reportVersion`, an ISO `scanDate`, the f
 
 ```json
 {
-  "reportVersion": 1,
+  "reportVersion": 2,
   "scanDate": "2026-11-21T10:00:00.000Z",
   "project": {
     "projectName": "storefront",
@@ -254,6 +268,17 @@ Representative generated Markdown excerpt:
 ```
 
 Generated Markdown also includes languages, frameworks, dependency names, configuration files, all marker locations, top-level folders, insights and recommendations, and scoring methodology.
+
+## HTML report
+
+Create a standalone, responsive report with inline CSS and a language bar chart:
+
+```sh
+codebaselens analyze . --format html
+codebaselens analyze . --format html --output ./reports/codebase.html
+```
+
+The report includes project overview, health, language and dependency tables, README summary, code statistics, scripts, tests, relevant configuration checks, folder tree, Git state, import findings, technical debt, and recommendations. It contains no external CDN or API calls, does not execute project scripts, and escapes project-provided text. Custom output paths inside the analyzed directory will not overwrite an existing file.
 
 ## Health score methodology
 
@@ -359,8 +384,13 @@ import {
   analyzeFolderTree,
   detectEmptyEntries,
   analyzeGit,
+  analyzeScripts,
+  analyzeImports,
+  analyzeConfigurationChecks,
+  summarizeTechnicalDebt,
   HEALTH_METHODOLOGY,
   renderTerminalReport,
+  renderHtmlReport,
   createProjectReportPayload,
   renderJsonReport,
   renderMarkdownReport,
@@ -372,7 +402,9 @@ const analysis = await analyzeProject(".");
 console.log(renderTerminalReport(analysis));
 ```
 
-The package also exports TypeScript types: `ScanResult`, `DependencyAnalysis`, `HealthCategory`, `HealthDeduction`, `InsightSeverity`, `MarkerAnalysis`, `MarkerKind`, `MarkerLocation`, `PackageJsonStatus`, `ProjectAnalysis`, `ProjectHealth`, `ProjectInsight`, `ProjectSignals`, `ReadmeAnalysis`, `CodeStatistics`, `TestAnalysis`, `FolderTree`, `EmptyEntries`, `GitAnalysis`, `ExportFormat`, `ProjectReportPayload`, and `WrittenReport`.
+The package also exports TypeScript types: `ScanResult`, `DependencyAnalysis`, `DependencyOverview`, `ScriptAnalysis`, `ImportAnalysis`, `ConfigurationCheck`, `TechnicalDebtFinding`, `TechnicalDebtSummary`, `HealthCategory`, `HealthDeduction`, `InsightSeverity`, `MarkerAnalysis`, `MarkerKind`, `MarkerLocation`, `PackageJsonStatus`, `ProjectAnalysis`, `ProjectHealth`, `ProjectInsight`, `ProjectSignals`, `ReadmeAnalysis`, `CodeStatistics`, `TestAnalysis`, `FolderTree`, `EmptyEntries`, `GitAnalysis`, `ExportFormat`, `ProjectReportPayload`, and `WrittenReport`.
+
+The report format is also available as a self-contained page: `codebaselens analyze . --format html --output ./reports/analysis.html`. Open the generated file in a browser; it uses local inline styling and contains no external assets or project code.
 
 `calculateProjectHealth` and `generateProjectInsights` take an analysis subset and `ProjectSignals`; their implementation signatures and data shapes are available in the published declarations. `writeProjectReport` writes to disk. The CLI is provided separately as the `codebaselens` executable.
 
@@ -383,8 +415,9 @@ The package also exports TypeScript types: `ScanResult`, `DependencyAnalysis`, `
 | `src/scanner.ts` | Recursively scans regular files/directories, skips configured directory names, counts extension groups, and lists root folders. |
 | `src/intelligence/` | Builds the project analysis: file lists, package manifest and dependency data, frameworks, package manager, configuration files, and marker locations. |
 | `src/intelligence/project-intelligence.ts` | Reads README signals, counts supported text lines, detects test frameworks/scripts, renders a bounded tree, finds empty entries, and reads Git status. |
+| `src/intelligence/v2-analysis.ts` | Lists scripts, statically checks imports and dependency references, evaluates relevant configuration checks, and summarizes technical debt. |
 | `src/health/` | Detects project signals, applies the versioned scoring methodology, and generates prioritized insights. |
-| `src/reports/` | Renders terminal, Markdown, and JSON reports and resolves/writes export paths. |
+| `src/reports/` | Renders terminal, Markdown, JSON, and standalone HTML reports and resolves/writes export paths. |
 | `src/cli.ts` | Defines the `codebaselens` Commander CLI and connects analysis to report output. |
 | `src/index.ts` | Exposes the public JavaScript and TypeScript API. |
 
@@ -416,7 +449,7 @@ cd /path/to/my-react-app
 codebaselens analyze .
 ```
 
-If the root `package.json` declares `react` (or `next`), CodebaseLens reports React. It counts `.js`, `.jsx`, `.ts`, and `.tsx` files by extension, separates production and development dependencies from `package.json`, and identifies a package manager when one recognized root lockfile is present. It also checks common configuration and marker files and reports applicable health deductions and recommendations.
+If the root `package.json` declares `react` (or `next`), CodebaseLens reports React. It counts `.js`, `.jsx`, `.ts`, and `.tsx` files by extension, separates production and development dependencies from `package.json`, lists package scripts without running them, checks relative imports, and identifies a package manager when one recognized root lockfile is present. It also checks relevant configuration and summarizes supported debt findings.
 
 Save a portable report for a review or issue:
 
@@ -425,13 +458,17 @@ codebaselens analyze . --format markdown --output ./review/react-project.md
 ```
 
 Create `./review` first. For machine-readable analysis, use `--format json` instead.
+For a portable visual report, use `--format html`.
 
 ## Limitations
 
-- Language identification is extension-based; CodebaseLens does not parse source syntax, generated code, or language versions.
+- Language identification is extension-based; import analysis uses static patterns and does not parse full language grammars, generated code, or language versions.
 - Scanning excludes a fixed set of directory names and does not read ignore-file rules such as `.gitignore`. It does not follow symlinks.
 - Framework and package-manager detection uses specific manifest and root-lockfile patterns. Custom, nested, or newer conventions may not be recognized.
 - Production and development dependency lists come only from root `package.json`; dependencies in Python, PHP, Java, or other ecosystem manifests are not inventoried or counted.
+- Import analysis resolves relative paths with common file and index extensions; configured aliases, computed dynamic imports, and runtime loading patterns cannot be resolved reliably.
+- Possible unused dependency results are conservative static candidates. Plugins, generated modules, shell commands, reflection, and runtime loading may use packages without a direct source import, so review before editing a manifest.
+- Configuration checks are suggestions based on detected source and declared tooling; optional files such as `.editorconfig` are not required for project health.
 - Marker scanning searches raw text for whole-word TODO, FIXME, and HACK in a fixed set of source extensions. It does not interpret comments, and skips a file if a NUL byte is encountered while reading it.
 - Test detection uses common directory and filename patterns. A project can have tests that are not detected.
 - Health scoring measures selected repository signals only. It does not run tests or builds, inspect dependency vulnerabilities, assess runtime behavior, or prove code quality.

@@ -111,5 +111,38 @@ export function renderTerminalReport(project: ProjectAnalysis): string {
       `  Changes: ${project.git.modifiedFiles} modified, ${project.git.addedFiles} added, ${project.git.deletedFiles} deleted, ${project.git.untrackedFiles} untracked`);
     if (project.git.latestCommit) lines.push(`  Latest commit: ${project.git.latestCommit.hash} · ${project.git.latestCommit.date} · ${project.git.latestCommit.subject}`);
   }
+  lines.push("", "Project scripts:");
+  if (project.scripts.status !== "valid") lines.push(`  Unavailable: package.json ${project.scripts.status}`);
+  else if (project.scripts.scripts.length === 0) lines.push("  (none configured)");
+  else for (const script of project.scripts.scripts) lines.push(`  ${script.name}: ${script.command}`);
+  lines.push("", "Dependency overview:",
+    `  Source referenced (production): ${project.dependencyOverview.referencedProduction.join(", ") || "none detected"}`,
+    `  Source referenced (development): ${project.dependencyOverview.referencedDevelopment.join(", ") || "none detected"}`,
+    `  Possible unused production candidates: ${project.dependencyOverview.unusedProductionCandidates.join(", ") || "none detected"}`,
+    `  Possible unused development candidates: ${project.dependencyOverview.unusedDevelopmentCandidates.join(", ") || "none detected"}`,
+    "  Candidates are heuristic findings, not confirmed unused packages.");
+  lines.push("", "Import analysis:",
+    `  Analyzed ${project.imports.analyzedFiles} JS/TS files · ${project.imports.localImportCount} relative imports · ${project.imports.unresolvedLocalImports.length} unresolved`,
+    `  Alias imports: ${project.imports.aliasImportsDetected} · literal dynamic imports: ${project.imports.dynamicImportsDetected} · computed dynamic imports: ${project.imports.computedDynamicImportsDetected}`);
+  for (const item of project.imports.unresolvedLocalImports.slice(0, 20)) lines.push(`  Unresolved: ${item.importer} → ${item.specifier}`);
+  if (project.imports.unresolvedLocalImports.length > 20) lines.push(`  … and ${project.imports.unresolvedLocalImports.length - 20} more unresolved imports.`);
+  if (project.imports.frequentlyImported.length) {
+    lines.push("  Frequently imported local modules:");
+    for (const item of project.imports.frequentlyImported.slice(0, 10)) lines.push(`    ${item.path}: ${item.count}`);
+  }
+  lines.push("", "Configuration checks:");
+  for (const check of project.configurationChecks) {
+    lines.push(`  [${check.status}${check.status === "missing" ? `, ${check.severity}` : ""}] ${check.fileName}: ${check.reason}`);
+    if (check.status === "missing" || check.status === "invalid") lines.push(`    Recommendation: ${check.recommendation}`);
+  }
+  lines.push("", "Technical debt:");
+  if (project.technicalDebt.findings.length === 0) lines.push("  No supported debt findings detected.");
+  else for (const group of project.technicalDebt.groups) {
+    lines.push(`  ${group.category}:`);
+    for (const finding of group.findings) {
+      lines.push(`    [${finding.severity}] ${finding.title}: ${finding.evidence}`);
+      lines.push(`      Recommendation: ${finding.recommendation}`);
+    }
+  }
   return lines.join("\n");
 }

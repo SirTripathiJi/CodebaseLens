@@ -11,7 +11,7 @@ export const program = new Command();
 
 program
   .name("codebaselens")
-  .description("Analyze project structure, languages, frameworks, dependencies, and health.")
+  .description("Analyze project structure, languages, project intelligence, and health.")
   .showHelpAfterError()
   .showSuggestionAfterError()
   .version(packageMetadata.version);
@@ -21,13 +21,13 @@ program
   .description("Analyze a project directory")
   .argument("[directory]", "directory to scan", ".")
   .addOption(
-    new Option("--format <format>", "report format").choices(["terminal", "markdown", "json"]).default("terminal"),
+    new Option("--format <format>", "report format").choices(["terminal", "markdown", "json", "html"]).default("terminal"),
   )
-  .option("--output <path>", "write a Markdown or JSON report to this path")
+  .option("--output <path>", "write a Markdown, JSON, or HTML report to this path")
   .action(async (directory: string, options: { format: string; output?: string }) => {
     try {
       if (options.output && options.format === "terminal") {
-        throw new Error("The --output option requires --format markdown or --format json.");
+        throw new Error("The --output option requires --format markdown, --format json, or --format html.");
       }
 
       const result = await analyzeProject(directory);

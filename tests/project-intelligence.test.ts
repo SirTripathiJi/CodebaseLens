@@ -34,11 +34,14 @@ describe("Part 1 project intelligence", () => {
   it("counts supported text lines by extension and safely skips binary files", async () => {
     const root = await project();
     const source = path.join(root, "app.ts");
+    const notes = path.join(root, "notes.txt");
     const binary = path.join(root, "data.json");
     await writeFile(source, "one\n  \nthree\n");
+    await writeFile(notes, "line one\r\nline two");
     await writeFile(binary, Buffer.from([0, 1, 2]));
-    const stats = await analyzeCodeStatistics(root, [source, binary]);
-    expect(stats).toMatchObject({ files: 1, totalLines: 3, blankLines: 1, nonEmptyLines: 2, byExtension: { ".ts": { files: 1, totalLines: 3, blankLines: 1, nonEmptyLines: 2 } } });
+    const stats = await analyzeCodeStatistics(root, [source, notes, binary]);
+    expect(stats).toMatchObject({ files: 2, totalLines: 5, blankLines: 1, nonEmptyLines: 4,
+      byExtension: { ".ts": { files: 1, totalLines: 3, blankLines: 1, nonEmptyLines: 2 }, ".txt": { files: 1, totalLines: 2, blankLines: 0, nonEmptyLines: 2 } } });
   });
 
   it("detects tests, dependency frameworks, scripts, and unrecognized test setups", async () => {
