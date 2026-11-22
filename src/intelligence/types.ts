@@ -68,7 +68,61 @@ export interface ProjectAnalysis extends ScanResult {
   packageManager: string;
   configurationFiles: string[];
   markers: MarkerAnalysis;
+  readme: ReadmeAnalysis;
+  codeStatistics: CodeStatistics;
+  tests: TestAnalysis;
+  folderTree: FolderTree;
+  emptyFilesAndDirectories: EmptyEntries;
+  git: GitAnalysis;
   signals: ProjectSignals;
   health: ProjectHealth;
   insights: ProjectInsight[];
+}
+
+export interface ReadmeAnalysis {
+  status: "read" | "missing" | "unreadable";
+  description: string | null;
+  introductoryText: string[];
+  headings: { level: number; text: string }[];
+  importantSections: { purpose: string[]; setup: string[]; installation: string[] };
+  technologyMentions: string[];
+}
+
+export interface CodeStatistics {
+  files: number;
+  totalLines: number;
+  blankLines: number;
+  nonEmptyLines: number;
+  byExtension: Record<string, { files: number; totalLines: number; blankLines: number; nonEmptyLines: number }>;
+}
+
+export interface TestAnalysis {
+  fileCount: number;
+  frameworkStatus: "detected" | "unrecognized" | "not-detected";
+  frameworks: string[];
+  testScripts: { name: string; command: string }[];
+}
+
+export interface FolderTree {
+  lines: string[];
+  truncated: boolean;
+  maxDepth: number;
+  maxEntries: number;
+}
+
+export interface EmptyEntries {
+  files: string[];
+  directories: string[];
+}
+
+export interface GitAnalysis {
+  available: boolean;
+  error: string | null;
+  branch: string | null;
+  workingTree: "clean" | "dirty" | "unknown";
+  modifiedFiles: number;
+  addedFiles: number;
+  deletedFiles: number;
+  untrackedFiles: number;
+  latestCommit: { hash: string; date: string; subject: string } | null;
 }

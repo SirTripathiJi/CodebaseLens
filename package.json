@@ -32,6 +32,8 @@
     "dist/intelligence/package-manager.d.ts",
     "dist/intelligence/project-files.js",
     "dist/intelligence/project-files.d.ts",
+    "dist/intelligence/project-intelligence.js",
+    "dist/intelligence/project-intelligence.d.ts",
     "dist/intelligence/types.js",
     "dist/intelligence/types.d.ts",
     "dist/health/insights.js",

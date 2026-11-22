@@ -119,6 +119,51 @@ export function renderMarkdownReport(payload: ProjectReportPayload): string {
   if (project.topLevelFolders.length === 0) lines.push("None.");
   else for (const folder of project.topLevelFolders) lines.push(`- ${inlineCode(folder)}`);
 
+  lines.push("", "## README understanding (rule-based)", "");
+  lines.push(`- Status: ${project.readme.status}`);
+  if (project.readme.status === "read") {
+    lines.push(`- Description: ${project.readme.description ? markdownText(project.readme.description) : "Not identified."}`);
+    lines.push(`- Introductory text: ${project.readme.introductoryText.map(markdownText).join(" ") || "None identified."}`);
+    lines.push(`- Technologies mentioned: ${project.readme.technologyMentions.map(markdownText).join(", ") || "None identified."}`);
+    lines.push("", "### README headings", "");
+    if (project.readme.headings.length === 0) lines.push("None found.");
+    else for (const heading of project.readme.headings) lines.push(`${"#".repeat(heading.level)} ${markdownText(heading.text)}`);
+    for (const [label, sections] of Object.entries(project.readme.importantSections)) {
+      lines.push("", `### ${label[0].toUpperCase()}${label.slice(1)} information`, "");
+      lines.push(sections.length ? sections.map((section) => `- ${markdownText(section)}`).join("\n") : "No matching section identified.");
+    }
+  }
+
+  lines.push("", "## Code statistics", "",
+    `- Supported text/source files: ${project.codeStatistics.files}`,
+    `- Total lines: ${project.codeStatistics.totalLines}`,
+    `- Blank lines: ${project.codeStatistics.blankLines}`,
+    `- Non-empty lines: ${project.codeStatistics.nonEmptyLines} (not necessarily executable code)`,
+    "", "| Extension | Files | Lines | Blank | Non-empty |", "| --- | ---: | ---: | ---: | ---: |");
+  const codeRows = Object.entries(project.codeStatistics.byExtension).sort(([a], [b]) => a.localeCompare(b));
+  if (codeRows.length === 0) lines.push("| None | 0 | 0 | 0 | 0 |");
+  else for (const [extension, counts] of codeRows) lines.push(`| ${markdownText(extension)} | ${counts.files} | ${counts.totalLines} | ${counts.blankLines} | ${counts.nonEmptyLines} |`);
+
+  lines.push("", "## Test intelligence", "",
+    `- Test files detected: ${project.tests.fileCount}`,
+    `- Framework status: ${project.tests.frameworkStatus}`,
+    `- Frameworks from package dependencies: ${project.tests.frameworks.map(markdownText).join(", ") || "None detected."}`,
+    `- Test scripts: ${project.tests.testScripts.map(({ name, command }) => `${inlineCode(name)}: ${markdownText(command)}`).join("; ") || "None detected."}`,
+    "", "## Folder structure", "", "```text", ...project.folderTree.lines, "```");
+  if (project.folderTree.truncated) lines.push("", `Tree truncated at depth ${project.folderTree.maxDepth} or ${project.folderTree.maxEntries} entries.`);
+
+  lines.push("", "## Empty files and directories", "",
+    `- Zero-byte files (${project.emptyFilesAndDirectories.files.length}): ${project.emptyFilesAndDirectories.files.map(inlineCode).join(", ") || "None."}`,
+    `- Empty directories (${project.emptyFilesAndDirectories.directories.length}): ${project.emptyFilesAndDirectories.directories.map(inlineCode).join(", ") || "None."}`,
+    "", "## Git information", "");
+  if (!project.git.available) lines.push(`Git information unavailable: ${markdownText(project.git.error ?? "unknown reason")}`);
+  else {
+    lines.push(`- Branch: ${project.git.branch ? inlineCode(project.git.branch) : "detached HEAD"}`,
+      `- Working tree: ${project.git.workingTree}`,
+      `- Changes: ${project.git.modifiedFiles} modified, ${project.git.addedFiles} added, ${project.git.deletedFiles} deleted, ${project.git.untrackedFiles} untracked`);
+    if (project.git.latestCommit) lines.push(`- Latest commit: ${inlineCode(project.git.latestCommit.hash)} · ${project.git.latestCommit.date} · ${markdownText(project.git.latestCommit.subject)}`);
+  }
+
   lines.push("", "## Insights and recommendations", "");
   if (project.insights.length === 0) {
     lines.push("No notable insights were detected.");

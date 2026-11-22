@@ -35,11 +35,19 @@ CodebaseLens does not modify the project being analyzed. It does not follow symb
 | Package manager | Identifies npm, pnpm, Yarn, or Bun from a single unambiguous recognized root lockfile; otherwise reports `unknown`. |
 | Configuration inventory | Lists recognized root configuration files such as `tsconfig.json`, package metadata, lint/format configuration, Docker files, `.gitignore`, and example environment files. Real `.env` files are excluded. |
 | Code markers | Counts case-insensitive TODO, FIXME, and HACK tokens in supported source extensions and records project-relative file paths and one-based line numbers. |
+| README understanding | Reads the root README and extracts introductory text, headings, likely purpose/setup/installation sections, and recognizable technology mentions using document rules. Missing or unreadable README data is labeled clearly; this is not AI-powered analysis. |
+| Code statistics | Counts lines in supported text/source extensions, including blank and non-empty lines, with totals by extension. Binary and unreadable files are skipped; non-empty lines are not necessarily executable code. |
+| Test intelligence | Counts test files by common filename and directory conventions, detects known frameworks from actual `package.json` dependencies, and lists test-related package scripts. An unrecognized setup is identified separately. |
+| Folder structure | Prints a depth and entry limited project tree, skips configured ignored directories and symlinks, and marks truncated output. |
+| Empty entries | Lists zero-byte regular files and genuinely empty directories by relative path. Findings are read-only. |
+| Git information | Reports branch, working tree state and change counts, plus the latest commit when Git is available and the directory is a repository. |
 | Health analysis | Calculates a normalized score out of 100, category scores, and explicit deductions. |
 | Insights | Produces sorted critical, warning, and informational findings with an explanation and recommended action. |
 | Reports | Prints a terminal report or writes a Markdown or JSON report containing the analysis and scoring methodology. |
 
 The scanner counts regular files and directories only. Symlinks are skipped, as are entries inside the fixed ignored-directory list above.
+
+All six project-intelligence sections are included in the existing `analyze` command and in terminal, Markdown, and JSON reports. README understanding and test-framework detection are rule-based. Code statistics cover the recognized text/source extensions listed under supported languages; binary and unreadable files are skipped safely. Folder trees are limited to depth 4 and 200 entries by default. Git is queried read-only; projects without an available Git command or repository receive an unavailable status.
 
 ## Installation
 
@@ -345,6 +353,12 @@ import {
   scanDirectory,
   calculateProjectHealth,
   generateProjectInsights,
+  analyzeReadme,
+  analyzeCodeStatistics,
+  analyzeTests,
+  analyzeFolderTree,
+  detectEmptyEntries,
+  analyzeGit,
   HEALTH_METHODOLOGY,
   renderTerminalReport,
   createProjectReportPayload,
@@ -358,7 +372,7 @@ const analysis = await analyzeProject(".");
 console.log(renderTerminalReport(analysis));
 ```
 
-The package also exports TypeScript types: `ScanResult`, `DependencyAnalysis`, `HealthCategory`, `HealthDeduction`, `InsightSeverity`, `MarkerAnalysis`, `MarkerKind`, `MarkerLocation`, `PackageJsonStatus`, `ProjectAnalysis`, `ProjectHealth`, `ProjectInsight`, `ProjectSignals`, `ExportFormat`, `ProjectReportPayload`, and `WrittenReport`.
+The package also exports TypeScript types: `ScanResult`, `DependencyAnalysis`, `HealthCategory`, `HealthDeduction`, `InsightSeverity`, `MarkerAnalysis`, `MarkerKind`, `MarkerLocation`, `PackageJsonStatus`, `ProjectAnalysis`, `ProjectHealth`, `ProjectInsight`, `ProjectSignals`, `ReadmeAnalysis`, `CodeStatistics`, `TestAnalysis`, `FolderTree`, `EmptyEntries`, `GitAnalysis`, `ExportFormat`, `ProjectReportPayload`, and `WrittenReport`.
 
 `calculateProjectHealth` and `generateProjectInsights` take an analysis subset and `ProjectSignals`; their implementation signatures and data shapes are available in the published declarations. `writeProjectReport` writes to disk. The CLI is provided separately as the `codebaselens` executable.
 
@@ -368,6 +382,7 @@ The package also exports TypeScript types: `ScanResult`, `DependencyAnalysis`, `
 | --- | --- |
 | `src/scanner.ts` | Recursively scans regular files/directories, skips configured directory names, counts extension groups, and lists root folders. |
 | `src/intelligence/` | Builds the project analysis: file lists, package manifest and dependency data, frameworks, package manager, configuration files, and marker locations. |
+| `src/intelligence/project-intelligence.ts` | Reads README signals, counts supported text lines, detects test frameworks/scripts, renders a bounded tree, finds empty entries, and reads Git status. |
 | `src/health/` | Detects project signals, applies the versioned scoring methodology, and generates prioritized insights. |
 | `src/reports/` | Renders terminal, Markdown, and JSON reports and resolves/writes export paths. |
 | `src/cli.ts` | Defines the `codebaselens` Commander CLI and connects analysis to report output. |

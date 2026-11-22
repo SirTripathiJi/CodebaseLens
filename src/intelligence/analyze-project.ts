@@ -9,6 +9,7 @@ import { listProjectFiles, listRootFiles } from "./project-files.js";
 import { calculateProjectHealth } from "../health/score.js";
 import { generateProjectInsights } from "../health/insights.js";
 import { detectProjectSignals } from "../health/project-signals.js";
+import { analyzeCodeStatistics, analyzeFolderTree, analyzeGit, analyzeReadme, analyzeTests, detectEmptyEntries } from "./project-intelligence.js";
 import type { ProjectAnalysis } from "./types.js";
 
 export async function analyzeProject(directoryPath: string): Promise<ProjectAnalysis> {
@@ -17,9 +18,14 @@ export async function analyzeProject(directoryPath: string): Promise<ProjectAnal
   const projectFiles = await listProjectFiles(scan.rootPath);
   const { analysis: dependencies, manifest } = await readPackageManifest(scan.rootPath, rootFiles);
   const projectName = manifest?.name ?? path.basename(scan.rootPath);
-  const [frameworks, markers] = await Promise.all([
+  const [frameworks, markers, readme, codeStatistics, tests, folderTree, emptyFilesAndDirectories] = await Promise.all([
     detectFrameworks(scan.rootPath, rootFiles, manifest),
     analyzeMarkers(scan.rootPath, projectFiles),
+    analyzeReadme(scan.rootPath, rootFiles),
+    analyzeCodeStatistics(scan.rootPath, projectFiles.map((file) => path.join(scan.rootPath, ...file.split("/")))),
+    analyzeTests(scan.rootPath, projectFiles.map((file) => path.join(scan.rootPath, ...file.split("/")))),
+    analyzeFolderTree(scan.rootPath),
+    detectEmptyEntries(scan.rootPath, projectFiles.map((file) => path.join(scan.rootPath, ...file.split("/")))),
   ]);
 
   const baseAnalysis = {
@@ -30,6 +36,12 @@ export async function analyzeProject(directoryPath: string): Promise<ProjectAnal
     packageManager: detectPackageManager(rootFiles),
     configurationFiles: detectConfigurationFiles(rootFiles),
     markers,
+    readme,
+    codeStatistics,
+    tests,
+    folderTree,
+    emptyFilesAndDirectories,
+    git: analyzeGit(scan.rootPath),
   };
   const signals = detectProjectSignals(baseAnalysis, rootFiles, projectFiles);
   const health = calculateProjectHealth(baseAnalysis, signals);
