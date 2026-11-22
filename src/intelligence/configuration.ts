@@ -4,8 +4,11 @@ export function detectConfigurationFiles(rootFiles: Set<string>): string[] {
 
     return (
       fileName === "tsconfig.json" ||
+      /^tsconfig\..+\.json$/i.test(fileName) ||
+      fileName === "jsconfig.json" ||
       fileName === "package.json" ||
       fileName === ".gitignore" ||
+      fileName === ".editorconfig" ||
       fileName === ".env.example" ||
       fileName === ".env.sample" ||
       lowerName === "dockerfile" ||

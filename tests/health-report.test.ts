@@ -128,7 +128,7 @@ describe("project health and reports", () => {
     const reportText = renderJsonReport(createProjectReportPayload(project, new Date("2026-11-21T00:00:00.000Z")));
     const parsed = JSON.parse(reportText);
 
-    expect(parsed.reportVersion).toBe(1);
+    expect(parsed.reportVersion).toBe(2);
     expect(parsed.scanDate).toBe("2026-11-21T00:00:00.000Z");
     expect(parsed.project.health.score).toBe(project.health.score);
     expect(parsed.project.insights).toEqual(project.insights);
